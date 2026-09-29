@@ -1,3 +1,12 @@
 name = "bondhon-biniyog-bob"
 compatibility_date = "2024-09-01"
 pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bondhon-db"
+database_id = "ee7fba75-e73d-45ea-b5df-9b1ef07f29f1"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "fe056f55ba584e3b9497e422e1c1568f"
