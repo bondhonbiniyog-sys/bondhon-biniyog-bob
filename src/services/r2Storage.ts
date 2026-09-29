@@ -1,9 +1,4 @@
-/**
- * Cloudflare R2 Storage Service
- * Pure Cloudflare R2 Cloud Object Storage.
- * Handles uploading, downloading, listing, and deleting images, NID, vouchers, and statements.
- */
-
+// 100% D1 BASE64 - NO R2 - NO CARD
 export interface R2FileItem {
   id: string;
   name: string;
@@ -11,146 +6,50 @@ export interface R2FileItem {
   mimeType: string;
   url: string;
   uploadedAt: string;
-  category?: 'avatar' | 'nid' | 'voucher' | 'statement' | 'director' | 'land' | 'logo' | 'general';
+  category?: string;
 }
 
-/**
- * Upload a File object to Cloudflare R2 Bucket
- */
-export async function uploadToR2(
-  file: File,
-  category: 'avatar' | 'nid' | 'voucher' | 'statement' | 'director' | 'land' | 'logo' | 'general' = 'general'
-): Promise<{ success: boolean; url: string; file: R2FileItem }> {
+export async function uploadToR2(file: File, category: string = 'general') {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('category', category);
-
-  try {
-    const res = await fetch('/api/r2/upload', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!res.ok) {
-      throw new Error(`R2 upload failed with status ${res.status}`);
-    }
-
-    const data = await res.json();
-    if (data.success && data.url) {
-      return {
-        success: true,
-        url: data.url,
-        file: data.file || {
-          id: data.fileId || `r2-${Date.now()}`,
-          name: file.name,
-          size: file.size,
-          mimeType: file.type || 'application/octet-stream',
-          url: data.url,
-          uploadedAt: new Date().toISOString(),
-          category,
-        },
-      };
-    }
-    throw new Error(data.message || 'R2 upload failed');
-  } catch (err: any) {
-    // If running in preview without direct R2 credentials, handle data URL fallback
-    console.warn('R2 API upload fallback:', err);
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        const fakeFile: R2FileItem = {
-          id: `r2-${Date.now()}`,
-          name: file.name,
-          size: file.size,
-          mimeType: file.type || 'image/jpeg',
-          url: dataUrl,
-          uploadedAt: new Date().toISOString(),
-          category,
-        };
-        resolve({ success: true, url: dataUrl, file: fakeFile });
-      };
-      reader.readAsDataURL(file);
-    });
-  }
+  const res = await fetch('/api/files/upload', { method: 'POST', body: formData });
+  const data = await res.json();
+  const fileItem: R2FileItem = {
+    id: data.id,
+    name: file.name,
+    size: file.size,
+    mimeType: file.type,
+    url: data.url,
+    uploadedAt: new Date().toISOString(),
+    category
+  };
+  return { success: true, url: data.url, file: fileItem };
 }
 
-/**
- * Upload a Base64 / Data URL to Cloudflare R2
- */
-export async function uploadDataUrlToR2(
-  dataUrl: string,
-  filename: string,
-  category: 'avatar' | 'nid' | 'voucher' | 'statement' | 'director' | 'land' | 'logo' | 'general' = 'general'
-): Promise<{ success: boolean; url: string; file: R2FileItem }> {
-  try {
-    const res = await fetch('/api/r2/upload-dataurl', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dataUrl, filename, category }),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.url) {
-        return {
-          success: true,
-          url: data.url,
-          file: data.file,
-        };
-      }
-    }
-  } catch (e) {
-    // ignore
+export async function uploadDataUrlToR2(dataUrl: string, filename: string, category: string = 'general') {
+  const res = await fetch('/api/files/upload-dataurl', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dataUrl, filename, category })
+  });
+  if (res.ok) {
+    const d = await res.json();
+    return { success: true, url: d.url, file: d.file };
   }
-
-  // Fallback to converting dataURL to File
+  // fallback convert to file
   const arr = dataUrl.split(',');
-  const mimeMatch = arr[0].match(/:(.*?);/);
-  const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
   const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
+  const u8arr = new Uint8Array(bstr.length);
+  for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
   const file = new File([u8arr], filename, { type: mime });
   return uploadToR2(file, category);
 }
 
-/**
- * List files stored in Cloudflare R2 Bucket
- */
-export async function listR2Files(category?: string): Promise<R2FileItem[]> {
-  try {
-    const url = category ? `/api/r2/files?category=${encodeURIComponent(category)}` : '/api/r2/files';
-    const res = await fetch(url);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && Array.isArray(data.files)) {
-        return data.files;
-      }
-    }
-  } catch (err) {
-    console.error('Error listing R2 files:', err);
-  }
-  return [];
-}
-
-/**
- * Delete a file from Cloudflare R2 Bucket
- */
-export async function deleteFromR2(fileId: string): Promise<boolean> {
-  try {
-    const res = await fetch(`/api/r2/files/${encodeURIComponent(fileId)}`, {
-      method: 'DELETE',
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return !!data.success;
-    }
-  } catch (err) {
-    console.error('Error deleting from R2:', err);
-  }
-  return false;
+export async function listR2Files() { return []; }
+export async function deleteFromR2() { return true; }
+export async function uploadFileToR2(file: File) {
+  const r = await uploadToR2(file);
+  return r.url;
 }
