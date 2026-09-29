@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Hind Siliguri', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .font-num, .font-english {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  .font-bengali {
+    font-family: 'Hind Siliguri', sans-serif;
+  }
+}
+
+/* Highly animated CSS keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.4), 0 0 30px rgba(22, 163, 74, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(37, 99, 235, 0.7), 0 0 45px rgba(202, 138, 4, 0.4);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulseGlow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Right-to-Left Marquee for Dynamic Bengali Notices */
+@keyframes marqueeRightToLeft {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee-rtl {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marqueeRightToLeft 28s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-rtl:hover {
+  animation-play-state: paused;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
+
