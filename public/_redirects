@@ -1,2 +1,2 @@
-# Cloudflare Pages SPA Routing Redirect
-/*    /index.html   200
+/api/* /api/:splat 200
+/* /index.html 200
