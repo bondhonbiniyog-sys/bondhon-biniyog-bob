@@ -1,4 +1,3 @@
-// functions/api/[[path]].ts - ULTIMATE FIX FOR 405 + QUIC ERROR
 export interface Env { BOB_DB: D1Database; }
 
 function json(data: any, status = 200) {
@@ -18,7 +17,7 @@ async function handleRequest(request: Request, env: Env) {
   let path = url.pathname.replace('/api/', '').replace(/^\/+/, '');
 
   try {
-    // SETTINGS
+    // SETTINGS - MAIN FIX
     if (path.startsWith('settings')) {
       if (request.method === 'GET') {
         try {
@@ -58,7 +57,7 @@ async function handleRequest(request: Request, env: Env) {
         try {
           const { results } = await env.BOB_DB.prepare('SELECT * FROM members ORDER BY created_at DESC LIMIT 100').all();
           return json({ success: true, members: results || [] });
-        } catch (e) { return json({ success: true, members: [] }); }
+        } catch { return json({ success: true, members: [] }); }
       }
       if (request.method === 'DELETE') {
         const id = path.split('/')[1];
@@ -102,7 +101,7 @@ async function handleRequest(request: Request, env: Env) {
           return json({ success: true, lands: results || [] });
         } catch { return json({ success: true, lands: [] }); }
       }
-      if (request.method === 'PUT') {
+      if (request.method === 'PUT' || request.method === 'POST') {
         const id = path.split('/')[1];
         const body: any = await request.json().catch(()=>({}));
         try {
@@ -146,7 +145,6 @@ async function handleRequest(request: Request, env: Env) {
       }
     }
 
-    // GALLERY / NOTIFICATIONS / OTHERS
     if (path.startsWith('gallery') || path.startsWith('notifications') || path.startsWith('marketplace') || path.startsWith('member-proposals')) {
       const key = path.split('/')[0];
       return json({ success: true, [key]: [], offers: [], submissions: [], proposals: [], gallery: [], notifications: [] });
@@ -158,7 +156,7 @@ async function handleRequest(request: Request, env: Env) {
   }
 }
 
-// Cloudflare Pages needs all method exports!
+// IMPORTANT: All methods export for Cloudflare
 export const onRequest: PagesFunction<Env> = async (ctx) => {
   if (ctx.request.method === 'OPTIONS') return json({}, 200);
   return handleRequest(ctx.request, ctx.env);
