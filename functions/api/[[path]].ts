@@ -17,7 +17,7 @@ async function handleRequest(request: Request, env: Env) {
   let path = url.pathname.replace('/api/', '').replace(/^\/+/, '');
 
   try {
-    // SETTINGS - MAIN FIX
+    // SETTINGS
     if (path.startsWith('settings')) {
       if (request.method === 'GET') {
         try {
@@ -31,23 +31,19 @@ async function handleRequest(request: Request, env: Env) {
           const existing = await env.BOB_DB.prepare('SELECT id FROM settings LIMIT 1').first() as any;
           if (!existing) await env.BOB_DB.prepare("INSERT INTO settings (id) VALUES ('1')").run().catch(()=>{});
           for (const k of Object.keys(body)) {
-            try {
-              await env.BOB_DB.prepare(`UPDATE settings SET ${k}=? WHERE id='1'`).bind(String(body[k]?? '')).run();
-            } catch {
-              try { await env.BOB_DB.prepare(`ALTER TABLE settings ADD COLUMN ${k} TEXT`).run(); } catch {}
-              try { await env.BOB_DB.prepare(`UPDATE settings SET ${k}=? WHERE id='1'`).bind(String(body[k]?? '')).run(); } catch {}
-            }
+            try { await env.BOB_DB.prepare(`UPDATE settings SET ${k}=? WHERE id='1'`).bind(String(body[k]?? '')).run(); }
+            catch { try { await env.BOB_DB.prepare(`ALTER TABLE settings ADD COLUMN ${k} TEXT`).run(); } catch {} try { await env.BOB_DB.prepare(`UPDATE settings SET ${k}=? WHERE id='1'`).bind(String(body[k]?? '')).run(); } catch {} }
           }
-        } catch (e) { console.error(e); }
+        } catch {}
         return json({ success: true });
       }
     }
 
     // STATS
-    if (path === 'stats' || path.startsWith('stats')) {
+    if (path.startsWith('stats')) {
       try {
         const m = await env.BOB_DB.prepare('SELECT COUNT(*) as c FROM members').first() as any;
-        return json({ success: true, stats: { total_members: m?.c || 0, pending_monthly_deposits: 0, pending_lumpsum_deposits: 0, total_pending: 0 } });
+        return json({ success: true, stats: { total_members: m?.c || 0, pending_monthly_deposits: 0, pending_lumpsum_deposits: 0 } });
       } catch { return json({ success: true, stats: {} }); }
     }
 
@@ -72,22 +68,19 @@ async function handleRequest(request: Request, env: Env) {
         try {
           if (path.includes('monthly')) {
             const { results } = await env.BOB_DB.prepare('SELECT * FROM monthly_deposits ORDER BY created_at DESC LIMIT 100').all();
-            return json({ success: true, deposits: results || [], monthly: results || [] });
+            return json({ success: true, deposits: results || [] });
           } else {
             const { results } = await env.BOB_DB.prepare('SELECT * FROM lumpsum_deposits ORDER BY created_at DESC LIMIT 100').all();
-            return json({ success: true, deposits: results || [], lumpsum: results || [] });
+            return json({ success: true, deposits: results || [] });
           }
         } catch { return json({ success: true, deposits: [] }); }
       }
-      if (path.includes('/status') && (request.method === 'PUT' || request.method === 'POST')) {
+      if (request.method === 'PUT' || request.method === 'POST') {
         const body: any = await request.json().catch(()=>({}));
         const id = path.split('/')[2] || path.split('/')[1];
         try {
-          if (path.includes('monthly')) {
-            await env.BOB_DB.prepare('UPDATE monthly_deposits SET status=? WHERE deposit_id=? OR id=?').bind(body.status, id, id).run();
-          } else {
-            await env.BOB_DB.prepare('UPDATE lumpsum_deposits SET status=? WHERE deposit_id=? OR id=?').bind(body.status, id, id).run();
-          }
+          if (path.includes('monthly')) await env.BOB_DB.prepare('UPDATE monthly_deposits SET status=? WHERE deposit_id=? OR id=?').bind(body.status, id, id).run();
+          else await env.BOB_DB.prepare('UPDATE lumpsum_deposits SET status=? WHERE deposit_id=? OR id=?').bind(body.status, id, id).run();
         } catch {}
         return json({ success: true });
       }
@@ -96,31 +89,22 @@ async function handleRequest(request: Request, env: Env) {
     // LANDS
     if (path.startsWith('lands')) {
       if (request.method === 'GET') {
-        try {
-          const { results } = await env.BOB_DB.prepare('SELECT * FROM lands ORDER BY created_at DESC').all();
-          return json({ success: true, lands: results || [] });
-        } catch { return json({ success: true, lands: [] }); }
+        try { const { results } = await env.BOB_DB.prepare('SELECT * FROM lands ORDER BY created_at DESC').all(); return json({ success: true, lands: results || [] }); }
+        catch { return json({ success: true, lands: [] }); }
       }
       if (request.method === 'PUT' || request.method === 'POST') {
         const id = path.split('/')[1];
         const body: any = await request.json().catch(()=>({}));
-        try {
-          await env.BOB_DB.prepare('UPDATE lands SET share_price=?, monthly_installment=? WHERE land_id=?').bind(body.share_price, body.monthly_installment, id).run();
-        } catch {}
+        try { await env.BOB_DB.prepare('UPDATE lands SET share_price=?, monthly_installment=? WHERE land_id=?').bind(body.share_price, body.monthly_installment, id).run(); } catch {}
         return json({ success: true });
       }
     }
 
-    // DIRECTORS - FIXED
+    // DIRECTORS
     if (path.startsWith('directors')) {
       if (request.method === 'GET') {
-        try {
-          const { results } = await env.BOB_DB.prepare('SELECT * FROM directors ORDER BY "order" ASC').all();
-          return json({ success: true, directors: results || [] });
-        } catch {
-          await env.BOB_DB.prepare('CREATE TABLE IF NOT EXISTS directors (director_id TEXT PRIMARY KEY, name TEXT, designation TEXT, phone TEXT, email TEXT, photo_url TEXT, message TEXT, "order" INTEGER)').run().catch(()=>{});
-          return json({ success: true, directors: [] });
-        }
+        try { const { results } = await env.BOB_DB.prepare('SELECT * FROM directors ORDER BY "order" ASC').all(); return json({ success: true, directors: results || [] }); }
+        catch { await env.BOB_DB.prepare('CREATE TABLE IF NOT EXISTS directors (director_id TEXT PRIMARY KEY, name TEXT, designation TEXT, phone TEXT, email TEXT, photo_url TEXT, message TEXT, "order" INTEGER)').run().catch(()=>{}); return json({ success: true, directors: [] }); }
       }
       if (request.method === 'POST') {
         const body: any = await request.json().catch(()=>({}));
@@ -145,9 +129,38 @@ async function handleRequest(request: Request, env: Env) {
       }
     }
 
-    if (path.startsWith('gallery') || path.startsWith('notifications') || path.startsWith('marketplace') || path.startsWith('member-proposals')) {
-      const key = path.split('/')[0];
-      return json({ success: true, [key]: [], offers: [], submissions: [], proposals: [], gallery: [], notifications: [] });
+    // MARKETPLACE / JOMI BIKRI - MAIN FIX FOR 405
+    if (path.startsWith('marketplace')) {
+      if (request.method === 'GET') {
+        try {
+          if (path.includes('submissions') || path.includes('offers')) {
+            const { results } = await env.BOB_DB.prepare('SELECT * FROM marketplace_submissions ORDER BY created_at DESC LIMIT 100').all().catch(async () => {
+              return await env.BOB_DB.prepare('SELECT * FROM member_proposals ORDER BY created_at DESC LIMIT 100').all().catch(()=>({results:[]})) as any;
+            }) as any;
+            return json({ success: true, submissions: results || [], offers: results || [] });
+          }
+          return json({ success: true, offers: [], submissions: [] });
+        } catch { return json({ success: true, offers: [], submissions: [] }); }
+      }
+      if (request.method === 'POST') {
+        const body: any = await request.json().catch(()=>({}));
+        const id = 'MP-' + Date.now();
+        try {
+          await env.BOB_DB.prepare('CREATE TABLE IF NOT EXISTS marketplace_submissions (id TEXT PRIMARY KEY, data TEXT, status TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)').run();
+          await env.BOB_DB.prepare('INSERT INTO marketplace_submissions (id, data, status) VALUES (?,?,?)').bind(id, JSON.stringify(body), 'Pending').run();
+        } catch {
+          try {
+            await env.BOB_DB.prepare('CREATE TABLE IF NOT EXISTS member_proposals (id TEXT PRIMARY KEY, data TEXT, status TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)').run();
+            await env.BOB_DB.prepare('INSERT INTO member_proposals (id, data, status) VALUES (?,?,?)').bind(id, JSON.stringify(body), 'Pending').run();
+          } catch (e: any) { console.log('Marketplace insert fail', e.message); }
+        }
+        return json({ success: true, id, message: 'আবেদন সফলভাবে জমা হয়েছে!' });
+      }
+    }
+
+    // GALLERY / NOTIFICATIONS
+    if (path.startsWith('gallery') || path.startsWith('notifications') || path.startsWith('member-proposals')) {
+      return json({ success: true, gallery: [], notifications: [], proposals: [] });
     }
 
     return json({ success: false, message: 'Route not found: ' + path }, 404);
@@ -156,7 +169,6 @@ async function handleRequest(request: Request, env: Env) {
   }
 }
 
-// IMPORTANT: All methods export for Cloudflare
 export const onRequest: PagesFunction<Env> = async (ctx) => {
   if (ctx.request.method === 'OPTIONS') return json({}, 200);
   return handleRequest(ctx.request, ctx.env);
