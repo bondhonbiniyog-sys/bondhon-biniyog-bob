@@ -1,3 +1,4 @@
+FIXED 29-09-2026 - FINAL
 export interface Env { BOB_DB: D1Database; }
 function json(d:any,s=200){return new Response(JSON.stringify(d),{status:s,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization'}})}
 async function handle(req:Request, env:Env){
