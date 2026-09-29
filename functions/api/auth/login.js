@@ -1,26 +1,16 @@
 export async function onRequest(context) {
-  const { request } = context;
-  
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type"
-      }
-    });
-  }
-
   return new Response(JSON.stringify({
     success: true,
     data: {
-      token: "admin-token-" + Date.now(),
+      token: "admin-token-123",
       user: { id: "1", email: "admin@bob.com", name: "Admin", role: "admin" }
     }
   }), {
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*"
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
     }
   });
 }
