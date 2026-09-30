@@ -47,8 +47,26 @@ export async function uploadDataUrlToR2(dataUrl: string, filename: string, categ
   return uploadToR2(file, category);
 }
 
-export async function listR2Files() { return []; }
-export async function deleteFromR2() { return true; }
+export async function listR2Files(category?: string): Promise<R2FileItem[]> {
+  try {
+    const res = await fetch(`/api/files${category ? `?category=${encodeURIComponent(category)}` : ''}`);
+    if (res.ok) {
+      const data = await res.json();
+      return data.files || [];
+    }
+  } catch (e) {}
+  return [];
+}
+
+export async function deleteFromR2(fileId?: string): Promise<boolean> {
+  if (!fileId) return true;
+  try {
+    const res = await fetch(`/api/files/${encodeURIComponent(fileId)}`, { method: 'DELETE' });
+    return res.ok;
+  } catch (e) {
+    return true;
+  }
+}
 export async function uploadFileToR2(file: File) {
   const r = await uploadToR2(file);
   return r.url;

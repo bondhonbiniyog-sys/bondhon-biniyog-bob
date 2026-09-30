@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import type { Member, SystemSettings } from '../types';
 import { CameraCaptureModal } from './CameraCaptureModal';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../firebase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -98,6 +100,48 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
       }, 1200);
     } catch (err: any) {
       setErrorMessage('সার্ভারের সাথে সংযোগ ত্রুটি');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Firebase Google One-Click Authentication
+  const handleGoogleAuth = async () => {
+    setIsLoading(true);
+    setErrorMessage('');
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      const email = user.email || '';
+      const fullName = user.displayName || 'Google Member';
+      const photoURL = user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(email)}`;
+
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          googleAuth: true,
+          full_name: fullName,
+          avatar_url: photoURL,
+          firebaseUid: user.uid,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.member) {
+        onLoginSuccess(data.member);
+        onClose();
+      } else {
+        setErrorMessage(data.message || 'Firebase গুগল সাইন-ইন সম্পন্ন করা যায়নি');
+      }
+    } catch (err: any) {
+      if (err.code === 'auth/popup-closed-by-user') {
+        setIsLoading(false);
+        return;
+      }
+      console.warn('Firebase popup sign-in fallback:', err);
+      // Fallback to quick email prompt if popup blocked
+      handleQuickAuth();
     } finally {
       setIsLoading(false);
     }
@@ -292,9 +336,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
 
               <button
                 type="button"
+                onClick={handleGoogleAuth}
+                disabled={isLoading}
+                className="cursor-pointer w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs transition flex items-center justify-center gap-2.5 shadow-md border border-slate-200"
+              >
+                <i className="fa-brands fa-google text-red-500 text-sm"></i>
+                <span>Google একাউন্ট দিয়ে লগইন (Firebase Auth)</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleQuickAuth}
                 disabled={isLoading}
-                className="cursor-pointer w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition flex items-center justify-center gap-2.5 shadow-md border border-slate-700"
+                className="cursor-pointer w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition flex items-center justify-center gap-2.5 shadow-md border border-slate-700"
               >
                 <i className="fa-solid fa-bolt text-amber-400"></i>
                 <span>দ্রুত এক ক্লিকে সাইন-ইন (One-Click Sign-in)</span>
@@ -563,9 +617,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
 
               <button
                 type="button"
+                onClick={handleGoogleAuth}
+                disabled={isLoading}
+                className="cursor-pointer w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs transition flex items-center justify-center gap-2.5 shadow-md border border-slate-200"
+              >
+                <i className="fa-brands fa-google text-red-500 text-sm"></i>
+                <span>Google একাউন্ট দিয়ে রেজিস্ট্রেশন (Firebase Auth)</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleQuickAuth}
                 disabled={isLoading}
-                className="cursor-pointer w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition flex items-center justify-center gap-2.5 shadow-md border border-slate-700"
+                className="cursor-pointer w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition flex items-center justify-center gap-2.5 shadow-md border border-slate-700"
               >
                 <i className="fa-solid fa-bolt text-amber-400"></i>
                 <span>দ্রুত এক ক্লিকে একাউন্ট তৈরি করুন</span>

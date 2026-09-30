@@ -1,0 +1,123 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default-Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'bondhon.biniyog@gmail.com' ||
+        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role == 'Admin')
+      );
+    }
+
+    function isOwner(memberId) {
+      return isSignedIn() && request.auth.uid == memberId;
+    }
+
+    // Members collection
+    match /members/{memberId} {
+      allow get: if isSignedIn() && (isValidId(memberId) && (isOwner(memberId) || isAdmin()));
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isValidId(memberId) && (
+        isOwner(memberId) || isAdmin()
+      );
+      allow update: if isSignedIn() && isValidId(memberId) && (
+        isAdmin() ||
+        (isOwner(memberId) && incoming().diff(existing()).affectedKeys().hasOnly([
+          'full_name', 'phone', 'avatar_url', 'live_photo_url', 'has_accepted_terms'
+        ]))
+      );
+      allow delete: if isAdmin() && isValidId(memberId);
+    }
+
+    // Monthly deposits
+    match /monthly_deposits/{depositId} {
+      allow get: if isSignedIn() && isValidId(depositId) && (
+        isAdmin() || resource.data.member_id == request.auth.uid
+      );
+      allow list: if isSignedIn() && (
+        isAdmin() || resource.data.member_id == request.auth.uid
+      );
+      allow create: if isSignedIn() && isValidId(depositId) && (
+        isAdmin() || (incoming().member_id == request.auth.uid && incoming().status == 'Pending')
+      );
+      allow update, delete: if isAdmin() && isValidId(depositId);
+    }
+
+    // Lumpsum deposits
+    match /lumpsum_deposits/{lumpsumId} {
+      allow get: if isSignedIn() && isValidId(lumpsumId) && (
+        isAdmin() || resource.data.member_id == request.auth.uid
+      );
+      allow list: if isSignedIn() && (
+        isAdmin() || resource.data.member_id == request.auth.uid
+      );
+      allow create: if isSignedIn() && isValidId(lumpsumId) && (
+        isAdmin() || (incoming().member_id == request.auth.uid && incoming().status == 'Pending')
+      );
+      allow update, delete: if isAdmin() && isValidId(lumpsumId);
+    }
+
+    // Land investments (Public read, admin write)
+    match /lands/{landId} {
+      allow get: if isValidId(landId);
+      allow list: if true;
+      allow create, update, delete: if isAdmin() && isValidId(landId);
+    }
+
+    // Directors board (Public read, admin write)
+    match /directors/{directorId} {
+      allow get: if isValidId(directorId);
+      allow list: if true;
+      allow create, update, delete: if isAdmin() && isValidId(directorId);
+    }
+
+    // Gallery (Public read, admin write)
+    match /gallery/{galleryId} {
+      allow get: if isValidId(galleryId);
+      allow list: if true;
+      allow create, update, delete: if isAdmin() && isValidId(galleryId);
+    }
+
+    // System Settings (Public read, admin write)
+    match /settings/{settingsId} {
+      allow get: if isValidId(settingsId);
+      allow list: if true;
+      allow create, update, delete: if isAdmin() && isValidId(settingsId);
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin() && isValidId(notificationId);
+    }
+
+    // Connection test document
+    match /test/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

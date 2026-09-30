@@ -109,34 +109,6 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right Action / Auth Buttons */}
           <div className="hidden sm:flex items-center gap-2.5">
-            {/* Cloudflare R2 Cloud Object Storage Button */}
-            {onOpenR2Storage && (
-              <button
-                onClick={onOpenR2Storage}
-                title="Cloudflare R2 ক্লাউড অবজেক্ট স্টোরেজ ও ফাইল আর্কাইভ"
-                className="cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-orange-300 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
-              >
-                <i className="fa-solid fa-cloud text-orange-400 text-sm"></i>
-                <span className="hidden xl:inline">Cloudflare R2</span>
-              </button>
-            )}
-
-            {/* Notification Bell Button */}
-            {currentUser && onOpenNotifications && (
-              <button
-                onClick={onOpenNotifications}
-                title="সদস্য নোটিফিকেশন"
-                className="cursor-pointer relative p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
-              >
-                <i className="fa-solid fa-bell text-sm"></i>
-                {unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 px-1.5 py-0.2 bg-red-600 text-white text-[10px] font-bold rounded-full animate-pulse border border-slate-900 font-num">
-                    {unreadNotificationsCount}
-                  </span>
-                )}
-              </button>
-            )}
-
             {currentUser ? (
               <div className="flex items-center gap-2.5">
                 {/* Admin Portal Button */}
@@ -204,19 +176,6 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Mobile Hamburger Button */}
           <div className="flex lg:hidden items-center gap-2">
-            {currentUser && onOpenNotifications && (
-              <button
-                onClick={onOpenNotifications}
-                className="cursor-pointer relative p-2 rounded-lg bg-slate-800 text-slate-300 border border-slate-700"
-              >
-                <i className="fa-solid fa-bell text-sm"></i>
-                {unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 px-1 py-0.2 bg-red-600 text-white text-[9px] font-bold rounded-full">
-                    {unreadNotificationsCount}
-                  </span>
-                )}
-              </button>
-            )}
             {currentUser && (
               <button
                 onClick={() => handleNavClick('dashboard')}
@@ -298,19 +257,6 @@ export const Header: React.FC<HeaderProps> = ({
                           {pendingApprovalsCount}
                         </span>
                       )}
-                    </button>
-                  )}
-
-                  {onOpenR2Storage && (
-                    <button
-                      onClick={() => {
-                        onOpenR2Storage();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="cursor-pointer w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium bg-orange-500/10 text-orange-300 border border-orange-500/30 flex items-center gap-2"
-                    >
-                      <i className="fa-solid fa-cloud text-orange-400"></i>
-                      <span>Cloudflare R2 ক্লাউড স্টোরেজ</span>
                     </button>
                   )}
 

@@ -124,12 +124,31 @@ export default function App() {
       }
     }
     fetchAppData();
+
+    // Auto-update: background polling every 15 seconds for live data sync
+    const autoRefreshInterval = setInterval(() => {
+      fetchAppData();
+    }, 15000);
+
+    // Auto-update: immediately refresh when tab/window becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchAppData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     const unsubscribeRealtime = useCloudflareRealtime((event) => {
       console.log('⚡ Realtime:', event.type);
       // Throttle realtime refresh - 2 sec gap
       setTimeout(() => fetchAppData(), 2000);
     });
-    return () => { unsubscribeRealtime(); };
+
+    return () => {
+      clearInterval(autoRefreshInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      unsubscribeRealtime();
+    };
   }, []); // FIX: Run only once on mount!
 
   const handleLoginSuccess = (member: Member) => {

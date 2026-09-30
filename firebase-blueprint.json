@@ -1,0 +1,161 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Member",
+      "description": "Represents an investment cooperative member or administrator.",
+      "type": "object",
+      "properties": {
+        "member_id": { "type": "string", "maxLength": 64, "description": "Unique identifier of the member" },
+        "full_name": { "type": "string", "maxLength": 128, "description": "Full name of the member" },
+        "email": { "type": "string", "format": "email", "maxLength": 128, "description": "Email address" },
+        "phone": { "type": "string", "maxLength": 32, "description": "Contact phone number" },
+        "role": { "type": "string", "enum": ["Member", "Admin"], "description": "User access role" },
+        "status": { "type": "string", "enum": ["Active", "Pending", "Blocked"], "description": "Account status" },
+        "monthly_target": { "type": "number", "description": "Monthly installment target amount" },
+        "total_monthly_paid": { "type": "number", "description": "Total monthly installments paid" },
+        "total_lumpsum_paid": { "type": "number", "description": "Total lumpsum investments paid" },
+        "grand_total_paid": { "type": "number", "description": "Grand total deposited" },
+        "due_installments": { "type": "number", "description": "Number of due/unpaid installments" },
+        "owned_shares": { "type": "number", "description": "Total land shares owned" },
+        "has_accepted_terms": { "type": "boolean", "description": "Whether terms & conditions accepted" },
+        "avatar_url": { "type": "string", "maxLength": 512, "description": "Profile picture URL" },
+        "joined_date": { "type": "string", "maxLength": 64, "description": "Registration date" }
+      },
+      "required": ["member_id", "full_name", "email", "phone", "role", "status"]
+    },
+    "MonthlyDeposit": {
+      "title": "MonthlyDeposit",
+      "description": "A monthly recurring deposit submitted by a member.",
+      "type": "object",
+      "properties": {
+        "deposit_id": { "type": "string", "maxLength": 64, "description": "Unique deposit record ID" },
+        "member_id": { "type": "string", "maxLength": 64, "description": "ID of the member" },
+        "member_name": { "type": "string", "maxLength": 128, "description": "Name of the member" },
+        "month_year": { "type": "string", "maxLength": 16, "description": "Target month in YYYY-MM format" },
+        "amount": { "type": "number", "description": "Deposit amount in BDT" },
+        "payment_method": { "type": "string", "enum": ["bKash", "Nagad", "Rocket", "Bank", "Cash"], "description": "Payment gateway" },
+        "trx_id": { "type": "string", "maxLength": 64, "description": "Transaction identification number" },
+        "voucher_url": { "type": "string", "maxLength": 512, "description": "Voucher or receipt image URL" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"], "description": "Approval status" },
+        "submitted_at": { "type": "string", "maxLength": 64, "description": "Submission timestamp" },
+        "admin_note": { "type": "string", "maxLength": 500, "description": "Administrative notes" }
+      },
+      "required": ["deposit_id", "member_id", "month_year", "amount", "payment_method", "trx_id", "status"]
+    },
+    "LumpsumDeposit": {
+      "title": "LumpsumDeposit",
+      "description": "A lump-sum capital or land share purchase deposit.",
+      "type": "object",
+      "properties": {
+        "lumpsum_id": { "type": "string", "maxLength": 64, "description": "Unique lump-sum ID" },
+        "member_id": { "type": "string", "maxLength": 64, "description": "ID of the member" },
+        "member_name": { "type": "string", "maxLength": 128, "description": "Name of the member" },
+        "purpose": { "type": "string", "maxLength": 256, "description": "Investment purpose or project name" },
+        "amount": { "type": "number", "description": "Lump-sum amount in BDT" },
+        "target_land_id": { "type": "string", "maxLength": 64, "description": "Target land project ID" },
+        "target_land_name": { "type": "string", "maxLength": 128, "description": "Target land project title" },
+        "payment_method": { "type": "string", "enum": ["bKash", "Nagad", "Rocket", "Bank", "Cash"], "description": "Payment gateway" },
+        "trx_id": { "type": "string", "maxLength": 64, "description": "Transaction identification number" },
+        "voucher_url": { "type": "string", "maxLength": 512, "description": "Voucher or receipt image URL" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"], "description": "Approval status" },
+        "submitted_at": { "type": "string", "maxLength": 64, "description": "Submission timestamp" },
+        "admin_note": { "type": "string", "maxLength": 500, "description": "Administrative notes" }
+      },
+      "required": ["lumpsum_id", "member_id", "purpose", "amount", "payment_method", "trx_id", "status"]
+    },
+    "LandInvestment": {
+      "title": "LandInvestment",
+      "description": "Land acquisition and co-ownership project.",
+      "type": "object",
+      "properties": {
+        "land_id": { "type": "string", "maxLength": 64, "description": "Land project identifier" },
+        "land_name": { "type": "string", "maxLength": 128, "description": "Land project name" },
+        "location": { "type": "string", "maxLength": 256, "description": "Geographical location" },
+        "area_size": { "type": "string", "maxLength": 64, "description": "Area size (e.g. 10 Katha)" },
+        "purchase_price": { "type": "number", "description": "Total purchase cost" },
+        "current_valuation": { "type": "number", "description": "Estimated current valuation" },
+        "total_shares": { "type": "number", "description": "Total number of equity shares" },
+        "share_price": { "type": "number", "description": "Price per individual share" },
+        "sold_shares": { "type": "number", "description": "Number of shares allocated" },
+        "status": { "type": "string", "maxLength": 64, "description": "Project operational status" },
+        "description": { "type": "string", "maxLength": 2000, "description": "Project details" }
+      },
+      "required": ["land_id", "land_name", "location", "total_shares", "share_price", "status"]
+    },
+    "Director": {
+      "title": "Director",
+      "description": "Governing board committee director.",
+      "type": "object",
+      "properties": {
+        "director_id": { "type": "string", "maxLength": 64, "description": "Director identifier" },
+        "name": { "type": "string", "maxLength": 128, "description": "Full name" },
+        "designation": { "type": "string", "maxLength": 128, "description": "Role/Title" },
+        "phone": { "type": "string", "maxLength": 32, "description": "Contact number" },
+        "email": { "type": "string", "maxLength": 128, "description": "Email address" },
+        "photo_url": { "type": "string", "maxLength": 512, "description": "Headshot photo URL" },
+        "message": { "type": "string", "maxLength": 1000, "description": "Official leadership quote" },
+        "order": { "type": "number", "description": "Display order index" }
+      },
+      "required": ["director_id", "name", "designation"]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "System or administrative announcement sent to members.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64, "description": "Notification ID" },
+        "target_member_id": { "type": "string", "maxLength": 64, "description": "Target member ID or ALL" },
+        "type": { "type": "string", "maxLength": 64, "description": "Notification category" },
+        "title": { "type": "string", "maxLength": 128, "description": "Notification title" },
+        "message": { "type": "string", "maxLength": 1000, "description": "Notification body" },
+        "created_at": { "type": "string", "maxLength": 64, "description": "Created timestamp" }
+      },
+      "required": ["id", "title", "message", "type", "created_at"]
+    },
+    "SystemSettings": {
+      "title": "SystemSettings",
+      "description": "Global application branding, configuration and financial targets.",
+      "type": "object",
+      "properties": {
+        "project_title": { "type": "string", "maxLength": 128, "description": "Cooperative title" },
+        "slogan_bengali": { "type": "string", "maxLength": 256, "description": "Bengali motto" },
+        "logo_url": { "type": "string", "maxLength": 512, "description": "Official logo URL" },
+        "notice_bengali": { "type": "string", "maxLength": 1000, "description": "Ticker announcement banner" },
+        "target_amount": { "type": "number", "description": "Target capital in BDT" },
+        "contact_phone_1": { "type": "string", "maxLength": 32, "description": "Primary hotline" },
+        "contact_email": { "type": "string", "maxLength": 128, "description": "Official email" }
+      },
+      "required": ["project_title", "target_amount"]
+    }
+  },
+  "firestore": {
+    "/members/{memberId}": {
+      "schema": "Member",
+      "description": "User profiles and member accounts"
+    },
+    "/monthly_deposits/{depositId}": {
+      "schema": "MonthlyDeposit",
+      "description": "Monthly recurring deposit submissions"
+    },
+    "/lumpsum_deposits/{lumpsumId}": {
+      "schema": "LumpsumDeposit",
+      "description": "Lump-sum and share purchase deposits"
+    },
+    "/lands/{landId}": {
+      "schema": "LandInvestment",
+      "description": "Land investment projects and share allocations"
+    },
+    "/directors/{directorId}": {
+      "schema": "Director",
+      "description": "Governing committee directors"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "AppNotification",
+      "description": "System notices and member alerts"
+    },
+    "/settings/{settingsDoc}": {
+      "schema": "SystemSettings",
+      "description": "Global cooperative configuration"
+    }
+  }
+}

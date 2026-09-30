@@ -2,5 +2,8 @@
   "name": "BONDHON O BINIYOG (BoB) - Joint Land Investment & Member Deposit Management",
   "description": "Joint land investment, crowdfunding, member monthly targets and lump-sum deposit management web application with Admin Panel.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API",
+    "MAJOR_CAPABILITY_FIREBASE_DATA_STORAGE"
+  ]
 }
